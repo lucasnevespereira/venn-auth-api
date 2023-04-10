@@ -26,7 +26,7 @@ func NewService(accountSid, authToken string) *Service {
 func (s *Service) SendVerificationCode(from, to string) (string, error) {
 	// Generate a random 6-digit code
 	code := rand.Intn(int(math.Pow10(codeLength)-1)+1) + int(math.Pow10(codeLength-1))
-	body := fmt.Sprintf("Venn App\n Votre code de vérification est le %d", code)
+	body := fmt.Sprintf("Venn verification code %d", code)
 
 	// Send SMS with code to the phone number
 	_, err := s.Send(from, to, body)
