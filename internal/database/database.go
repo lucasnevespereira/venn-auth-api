@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"log"
 )
 
 type Client struct {
@@ -21,12 +22,28 @@ type Config struct {
 }
 
 func NewClient(config Config) (*Client, error) {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=UTC",
-		config.Host, config.User, config.Password, config.DBName, config.Port, config.SSLMode)
+
+	dsn := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		config.Host,
+		config.Port,
+		config.User,
+		config.Password,
+		config.DBName,
+		config.SSLMode)
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not open database client: %s", dsn)
+
+	}
+	log.Println("connected!")
+
+	err = db.AutoMigrate(&User{})
 	if err != nil {
 		return nil, err
 	}
+
 	return &Client{db: db}, nil
 }
 
