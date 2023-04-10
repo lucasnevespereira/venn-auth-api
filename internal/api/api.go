@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"net/http"
 	"venn-auth-api/configs"
 	"venn-auth-api/internal/database"
@@ -12,7 +11,7 @@ import (
 
 type Api struct {
 	sms    *sms.Service
-	db     *gorm.DB
+	db     *database.Client
 	config configs.ApiConfig
 }
 
@@ -22,7 +21,7 @@ func New() *Api {
 
 func (api *Api) Run() error {
 
-	db, err := database.Open(database.Config{
+	db, err := database.NewClient(database.Config{
 		User:     api.config.DB.User,
 		Password: api.config.DB.Password,
 		Host:     api.config.DB.Host,
@@ -40,10 +39,9 @@ func (api *Api) Run() error {
 
 	router := gin.Default()
 	auth := router.Group("/api/auth")
-	auth.POST("/sms", api.sendSMS)
-	auth.POST("/verify", api.verifySMS)
-	auth.POST("/signup", api.handleSignup)
-	auth.POST("/login", api.handleLogin)
+
+	auth.POST("/verify", api.verifyCode)
+	auth.POST("/send", api.sendCode)
 
 	err = router.Run(fmt.Sprintf(":%d", api.config.Port))
 	if err != nil && err != http.ErrServerClosed {

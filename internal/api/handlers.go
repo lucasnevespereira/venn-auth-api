@@ -1,74 +1,55 @@
 package api
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"venn-auth-api/internal/models"
 )
 
-func (api *Api) sendSMS(c *gin.Context) {
-	var req models.SmsRequest
-	err := c.BindJSON(&req)
-	if err != nil {
+func (api *Api) sendCode(c *gin.Context) {
+	var req models.SendCodeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// TODO: send SMS code to the phone number
-	_, err = api.sms.Send(api.config.Twilio.PhoneNumber, req.Phone, "Hello from Venn Auth API")
+	// Send verification code via SMS
+	code, err := api.sms.SendVerificationCode(api.config.Twilio.PhoneNumber, req.PhoneNumber)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send verification code"})
+		return
+	}
+
+	// TODO: Store the verification code in the database for the phone number
+	err = api.db.SaveVerificationCode(req.PhoneNumber, code)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 	}
 
-	res := models.SmsResponse{Message: fmt.Sprintf("Sms sent to %s", req.Phone)}
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, gin.H{"code": code})
 }
 
-func (api *Api) verifySMS(c *gin.Context) {
-	var req models.VerifyRequest
-	err := c.BindJSON(&req)
-	if err != nil {
+func (api *Api) verifyCode(c *gin.Context) {
+	var req models.VerifyCodeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// TODO: verify SMS code for the phone number
+	// TODO: Retrieve the verification code from the database for the phone number
+	user, err := api.db.GetUserByPhoneNumber(req.PhoneNumber)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err})
+	}
+
+	if req.Code != user.VerificationCode {
+		// TODO: Track the number of failed verification attempts and lock the account if necessary
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid verification code"})
+		return
+	}
 
 	// Generate and return a JWT token
 	token := "dummy-token"
 	res := models.VerifyResponse{Token: token}
-	c.JSON(http.StatusOK, res)
-}
-
-func (api *Api) handleLogin(c *gin.Context) {
-	var req models.LoginRequest
-	err := c.BindJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// TODO: verify SMS code for the phone number
-
-	// Generate and return a JWT token
-	token := "dummy-token"
-	res := models.LoginResponse{Token: token}
-	c.JSON(http.StatusOK, res)
-}
-
-func (api *Api) handleSignup(c *gin.Context) {
-	var req models.SignupRequest
-	err := c.BindJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// TODO: verify SMS code for the phone number
-
-	// TODO: create user in the database
-
-	res := models.SignupResponse{Message: "Account created"}
 	c.JSON(http.StatusOK, res)
 }
