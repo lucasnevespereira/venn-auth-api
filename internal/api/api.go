@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"venn-auth-api/configs"
 	"venn-auth-api/internal/database"
+	"venn-auth-api/internal/services/sms"
 )
 
 type Api struct {
+	sms    *sms.Service
 	db     *gorm.DB
 	config configs.ApiConfig
 }
@@ -31,13 +33,13 @@ func (api *Api) Run() error {
 	if err != nil {
 		return err
 	}
-
 	api.db = db
 
+	smsService := sms.NewService(api.config.Twilio.AccountSid, api.config.Twilio.AuthToken)
+	api.sms = smsService
+
 	router := gin.Default()
-
 	auth := router.Group("/api/auth")
-
 	auth.POST("/sms", api.sendSMS)
 	auth.POST("/verify", api.verifySMS)
 	auth.POST("/signup", api.handleSignup)

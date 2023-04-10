@@ -6,9 +6,10 @@ import (
 )
 
 type ApiConfig struct {
-	Env  string
-	Port int
-	DB   DB
+	Env    string
+	Port   int
+	Twilio Twilio
+	DB     DB
 }
 
 type DB struct {
@@ -18,6 +19,11 @@ type DB struct {
 	Port     int
 	Name     string
 	SSLMode  string
+}
+type Twilio struct {
+	AccountSid  string
+	AuthToken   string
+	PhoneNumber string
 }
 
 func LoadApiConfig() ApiConfig {
@@ -34,6 +40,11 @@ func LoadApiConfig() ApiConfig {
 			Port:     viper.GetInt("DB_PORT"),
 			Name:     viper.GetString("DB_NAME"),
 			SSLMode:  viper.GetString("DB_SSL_MODE"),
+		},
+		Twilio: Twilio{
+			AccountSid:  viper.GetString("TWILIO_ACCOUNT_SID"),
+			AuthToken:   viper.GetString("TWILIO_AUTH_TOKEN"),
+			PhoneNumber: viper.GetString("TWILIO_PHONE_NUMBER"),
 		},
 	}
 

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"venn-auth-api/internal/models"
@@ -15,8 +16,12 @@ func (api *Api) sendSMS(c *gin.Context) {
 	}
 
 	// TODO: send SMS code to the phone number
+	_, err = api.sms.Send(api.config.Twilio.PhoneNumber, req.Phone, "Hello from Venn Auth API")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+	}
 
-	res := models.SmsResponse{Message: "SMS sent"}
+	res := models.SmsResponse{Message: fmt.Sprintf("Sms sent to %s", req.Phone)}
 	c.JSON(http.StatusOK, res)
 }
 
