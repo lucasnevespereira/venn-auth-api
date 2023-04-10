@@ -1,5 +1,6 @@
 .PHONY: lint run
 
+
 lint:
 	golangci-lint run --timeout 5m
 

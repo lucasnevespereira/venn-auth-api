@@ -1,16 +1,16 @@
 package api
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
 	"venn-auth-api/configs"
 	"venn-auth-api/internal/database"
 )
 
 type Api struct {
-	db     *sql.DB
+	db     *gorm.DB
 	config configs.ApiConfig
 }
 
@@ -31,7 +31,6 @@ func (api *Api) Run() error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
 
 	api.db = db
 

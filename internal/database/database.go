@@ -1,10 +1,9 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
-
-	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 type Config struct {
@@ -16,21 +15,10 @@ type Config struct {
 	SSLMode  string
 }
 
-// Open opens a new database connection and returns a *sql.DB object
-func Open(config Config) (*sql.DB, error) {
-	dbURI := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		config.User,
-		config.Password,
-		config.Host,
-		config.Port,
-		config.DBName,
-		config.SSLMode,
-	)
-	db, err := sql.Open("postgres", dbURI)
-	if err != nil {
-		return nil, err
-	}
-	err = db.Ping()
+func Open(config Config) (*gorm.DB, error) {
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=UTC",
+		config.Host, config.User, config.Password, config.DBName, config.Port, config.SSLMode)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
